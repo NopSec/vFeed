@@ -44,6 +44,31 @@ class vFeedInfo():
         self.vFeedInfo['secondary'] = config.database['secondary']
         return self.vFeedInfo
 
+class CVE():
+    def __init__(self, r):
+        self.cveid = r[0]
+        self.published_date = r[1]
+        self.modified_date = r[2]
+        self.description = r[3]
+        self.base_score = r[4]
+        self.impact_score = r[5]
+        self.exploit_score = r[6]
+        self.risk_factor = self._risk_factor(self.base_score)
+
+    def _risk_factor(self, base_score):
+        base_score = float(base_score)
+        if base_score <= 0 or base_score > 10.0:
+            return "None"
+        elif base_score > 0 and base_score <= 2.0:
+            return "Low"
+        elif base_score > 2.0 and base_score <= 5.0:
+            return "Medium"
+        elif base_score > 5.0 and base_score <= 8.0:
+            return "High"
+        elif base_score > 8.0 and base_score <= 10.0:
+            return "Critical"
+        
+        
 
 class vFeed():
 
@@ -66,7 +91,10 @@ class vFeed():
         try:
             self.cur.execute('SELECT * FROM nvd_db WHERE cveid=?', self.query) 
             self.data = self.cur.fetchone()
-            if self.data is None:
+            if self.data:
+                self.cve = CVE(self.data)
+            else:
+                self.cve = None
                 print '[warning] Entry %s missed from vFeed Database' %self.cveID
         except Exception, e:
              print '[exception]:', e
